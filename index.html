@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Calculadora con conceptos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #e5e7eb;
+      display: flex;
+      justify-content: center;
+    }
+    .app {
+      max-width: 420px;
+      width: 100%;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 4px;
+      text-align: center;
+      color: #111827;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      background: #e5e7eb;
+      padding: 4px;
+      border-radius: 999px;
+    }
+    .tab-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #6b7280;
+    }
+    .tab-btn.active {
+      background: #111827;
+      color: #f9fafb;
+      box-shadow: 0 6px 14px rgba(15,23,42,0.5);
+    }
+
+    /* pantalla calculadora */
+    .screen {
+      background: linear-gradient(180deg, #111827, #1f2937);
+      border-radius: 24px;
+      padding: 20px 18px;
+      margin-bottom: 8px;
+      box-shadow: 0 20px 40px rgba(15,23,42,0.6);
+      color: #f9fafb;
+    }
+    .display-expression {
+      min-height: 18px;
+      font-size: 14px;
+      color: #9ca3af;
+      text-align: right;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .display-labels {
+      min-height: 16px;
+      font-size: 13px;
+      color: #e5e7eb;
+      text-align: right;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .display-result {
+      font-size: 40px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* teclado */
+    .keypad {
+      background: #111827;
+      border-radius: 24px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      box-shadow: 0 14px 26px rgba(15,23,42,0.55);
+      margin-bottom: 10px;
+    }
+    .key {
+      border: none;
+      border-radius: 16px;
+      padding: 14px 10px;
+      font-size: 18px;
+      font-weight: 500;
+      cursor: pointer;
+      background: #1f2937;
+      color: #f9fafb;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.45);
+      transition: transform 0.06s ease, box-shadow 0.06s ease, opacity 0.06s;
+    }
+    .key:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      opacity: 0.9;
+    }
+    .key-func {
+      background: #374151;
+      color: #e5e7eb;
+    }
+    .key-op {
+      background: #4b5563;
+    }
+    .key-equal {
+      background: #fb923c;
+      color: #111827;
+    }
+    .key-zero {
+      grid-column: span 2;
+    }
+
+    /* botones secundarios / conceptos */
+    .toggle-concepts-btn,
+    .secondary-btn {
+      margin-top: 6px;
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #e5e7eb;
+      color: #374151;
+      cursor: pointer;
+    }
+    .toggle-concepts-btn:active,
+    .secondary-btn:active {
+      opacity: 0.9;
+    }
+
+    /* panel conceptos */
+    .concepts-panel {
+      margin-top: 8px;
+      margin-bottom: 12px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: 0 6px 16px rgba(148,163,184,0.6);
+      font-size: 13px;
+    }
+    .concept-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .concept-row:last-child {
+      margin-bottom: 0;
+    }
+    .concept-amount {
+      min-width: 120px;
+      color: #111827;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .concept-input {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #374151;
+    }
+    .concept-input:focus {
+      outline: 2px solid #fb7185;
+      outline-offset: 1px;
+      border-color: transparent;
+    }
+    .concept-total-row {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 6px;
+      margin-top: 4px;
+    }
+    .concept-total-label {
+      font-weight: 700;
+    }
+    .concept-input-total {
+      font-weight: 700;
+      background: #f9fafb;
+    }
+
+    /* formulario de nota */
+    .note-form {
+      margin-top: 8px;
+      margin-bottom: 10px;
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+    .note-form h2 {
+      font-size: 13px;
+      margin: 0 0 6px;
+      color: #111827;
+    }
+    .note-field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 6px;
+      gap: 2px;
+    }
+    .note-label {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .note-input {
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+    .note-input:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 1px;
+      border-color: transparent;
+    }
+    .note-form-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .note-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .note-btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+    .note-btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .note-btn:active {
+      opacity: 0.9;
+    }
+
+    /* lista de notas */
+    .notes-list {
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+    .notes-list-title {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .note-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 8px 10px;
+      box-shadow: 0 4px 10px rgba(148,163,184,0.45);
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .note-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 2px;
+      gap: 6px;
+    }
+    .note-name {
+      font-weight: 600;
+      color: #111827;
+      max-width: 60%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .note-total {
+      font-weight: 700;
+      color: #111827;
+    }
+    .note-meta {
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .note-expression {
+      color: #374151;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .note-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .note-action-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .note-action-load {
+      background: #22c55e;
+      color: #052e16;
+    }
+    .note-action-delete {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .note-action-btn:active {
+      opacity: 0.9;
+    }
+
+    .notes-hint {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    footer {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.footer-main-link {
+  color: #9ca3af;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.footer-main-link:hover {
+  color: #6b7280;
+}
+
+.footer-brand {
+  margin-top: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.footer-brand a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #9ca3af;
+  text-decoration: none;
+}
+
+.footer-brand a:hover {
+  color: #6b7280;
+}
+
+.footer-logo {
+  height: 14px;
+}
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Calculadora con conceptos</h1>
+  <div class="subtitle">
+    Calculadora normal. Después puedes etiquetar cada número (SALÓN, SILLAS, HORAS…).
+  </div>
+
+  <!-- Pestañas -->
+  <div class="tabs">
+    <button id="tabCalc" class="tab-btn active">Calculadora</button>
+    <button id="tabNotes" class="tab-btn">Notas</button>
+  </div>
+
+  <!-- VISTA CALCULADORA -->
+  <section id="calcView">
+    <section class="screen">
+      <div id="expressionText" class="display-expression"></div>
+      <div id="labelsText" class="display-labels"></div>
+      <div id="resultText" class="display-result">0</div>
+    </section>
+
+    <section class="keypad">
+      <!-- fila 1 -->
+      <button class="key key-func" data-action="clear">C</button>
+      <button class="key key-func" data-action="sign">±</button>
+      <button class="key key-func" data-action="percent">%</button>
+      <button class="key key-op" data-action="operator" data-operator="÷">÷</button>
+      <!-- fila 2 -->
+      <button class="key key-num" data-digit="7">7</button>
+      <button class="key key-num" data-digit="8">8</button>
+      <button class="key key-num" data-digit="9">9</button>
+      <button class="key key-op" data-action="operator" data-operator="×">×</button>
+      <!-- fila 3 -->
+      <button class="key key-num" data-digit="4">4</button>
+      <button class="key key-num" data-digit="5">5</button>
+      <button class="key key-num" data-digit="6">6</button>
+      <button class="key key-op" data-action="operator" data-operator="-">−</button>
+      <!-- fila 4 -->
+      <button class="key key-num" data-digit="1">1</button>
+      <button class="key key-num" data-digit="2">2</button>
+      <button class="key key-num" data-digit="3">3</button>
+      <button class="key key-op" data-action="operator" data-operator="+">+</button>
+      <!-- fila 5 -->
+      <button class="key key-num key-zero" data-digit="0">0</button>
+      <button class="key key-num" data-digit=".">.</button>
+      <button class="key key-equal" data-action="equals">=</button>
+    </section>
+
+    <button id="toggleConceptsBtn" class="toggle-concepts-btn">
+      Añadir conceptos
+    </button>
+
+    <section id="conceptsPanel" class="concepts-panel" style="display:none;"></section>
+
+    <button id="saveNoteBtn" class="secondary-btn">
+      Guardar como nota / cotización (solo en este dispositivo)
+    </button>
+
+    <section id="noteForm" class="note-form" style="display:none;">
+      <h2>Datos de la nota</h2>
+      <div class="note-field">
+        <span class="note-label">Nombre de la persona</span>
+        <input id="noteNameInput" class="note-input" type="text" placeholder="Ej. Ana Martínez" />
+      </div>
+      <div class="note-field">
+        <span class="note-label">WhatsApp</span>
+        <input id="notePhoneInput" class="note-input" type="tel" placeholder="Ej. 5512345678" />
+      </div>
+      <div class="note-form-actions">
+        <button id="noteCancelBtn" class="note-btn note-btn-secondary">Cancelar</button>
+        <button id="noteSaveBtn" class="note-btn note-btn-primary">Guardar nota</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- VISTA NOTAS -->
+  <section id="notesView" style="display:none;">
+    <p class="notes-hint">
+      Aquí se guardan las notas / cotizaciones que has generado en este dispositivo.
+    </p>
+    <section id="notesList" class="notes-list"></section>
+  </section>
+
+  <footer>
+    <div>
+      <a href="#" id="installLink" class="footer-main-link">
+        Añadir esta calculadora a la pantalla de inicio
+      </a>
+    </div>
+    <div class="footer-brand">
+      <a href="https://misdesarrollos.space/" target="_blank" rel="noopener noreferrer">
+        <img src="logo-md.png" alt="MisDesarrollos" class="footer-logo" />
+        <span>By Misdesarrollos</span>
+      </a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  const STORAGE_KEY = "calcConceptos_v4";
+
+  let segments = []; // { value, operator, label }
+  let showConcepts = false;
+  let savedNotes = []; // { id, name, phone, total, expression, labels, createdAt, segments }
+
+  let currentValue = "0";
+  let accumulator = null;
+  let pendingOperator = null;
+  let waitingForSecondOperand = false;
+  let justEvaluated = false;
+
+  const expressionEl = document.getElementById("expressionText");
+  const labelsEl = document.getElementById("labelsText");
+  const resultEl = document.getElementById("resultText");
+  const conceptsPanel = document.getElementById("conceptsPanel");
+  const toggleConceptsBtn = document.getElementById("toggleConceptsBtn");
+
+  const saveNoteBtn = document.getElementById("saveNoteBtn");
+  const noteForm = document.getElementById("noteForm");
+  const noteNameInput = document.getElementById("noteNameInput");
+  const notePhoneInput = document.getElementById("notePhoneInput");
+  const noteSaveBtn = document.getElementById("noteSaveBtn");
+  const noteCancelBtn = document.getElementById("noteCancelBtn");
+  const notesListEl = document.getElementById("notesList");
+
+  const tabCalc = document.getElementById("tabCalc");
+  const tabNotes = document.getElementById("tabNotes");
+  const calcView = document.getElementById("calcView");
+  const notesView = document.getElementById("notesView");
+
+  const installLink = document.getElementById("installLink");
+  let deferredInstallPrompt = null;
+
+  function performCalculation(operator, a, b) {
+    switch (operator) {
+      case "+": return a + b;
+      case "−": return a - b;
+      case "-": return a - b;
+      case "×": return a * b;
+      case "÷": return b === 0 ? a : a / b;
+      default: return b;
+    }
+  }
+
+  function formatNumber(n) {
+    const num = Number.isFinite(n) ? n : 0;
+    return num.toLocaleString("es-MX", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ segments, showConcepts, savedNotes })
+      );
+    } catch (e) {}
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.segments)) {
+        segments = data.segments.map(seg => ({
+          value: seg.value,
+          operator: seg.operator || "",
+          label: seg.label || ""
+        }));
+      }
+      showConcepts = !!(data && data.showConcepts);
+      if (data && Array.isArray(data.savedNotes)) {
+        savedNotes = data.savedNotes;
+      }
+    } catch (e) {}
+  }
+
+  function evaluateSegments() {
+    if (segments.length === 0) return parseFloat(currentValue) || 0;
+    let acc = parseFloat(segments[0].value) || 0;
+    for (let i = 1; i < segments.length; i++) {
+      const seg = segments[i];
+      const val = parseFloat(seg.value) || 0;
+      acc = performCalculation(seg.operator, acc, val);
+    }
+    return acc;
+  }
+
+  function buildExpressionText() {
+    let parts = [];
+    if (segments.length > 0) {
+      segments.forEach((seg, idx) => {
+        const valStr = formatNumber(parseFloat(seg.value) || 0);
+        if (idx === 0) parts.push(valStr);
+        else parts.push(`${seg.operator} ${valStr}`);
+      });
+
+      if (pendingOperator && waitingForSecondOperand) {
+        parts.push(pendingOperator);
+      } else if (pendingOperator && !waitingForSecondOperand && !justEvaluated) {
+        const valStr = formatNumber(parseFloat(currentValue) || 0);
+        parts.push(`${pendingOperator} ${valStr}`);
+      }
+    } else {
+      if (currentValue !== "0") {
+        parts.push(formatNumber(parseFloat(currentValue) || 0));
+      }
+    }
+    return parts.join(" ");
+  }
+
+  function buildLabelsText() {
+    if (!showConcepts || segments.length === 0) return "";
+    const parts = [];
+    segments.forEach((seg, idx) => {
+      const label = (seg.label || "").trim();
+      if (!label) return;
+      if (idx === 0) {
+        parts.push(label);
+      } else {
+        const op = seg.operator || "+";
+        parts.push(`${op} ${label}`);
+      }
+    });
+    if (!parts.length) return "";
+    return parts.join(" ");
+  }
+
+  function updateDisplay() {
+    expressionEl.textContent = buildExpressionText();
+    labelsEl.textContent = buildLabelsText();
+    labelsEl.style.display = labelsEl.textContent ? "block" : "none";
+    resultEl.textContent = formatNumber(parseFloat(currentValue) || 0);
+  }
+
+  function renderConceptsPanel() {
+    conceptsPanel.innerHTML = "";
+    conceptsPanel.style.display = showConcepts && segments.length > 0 ? "block" : "none";
+    if (!showConcepts || segments.length === 0) return;
+
+    segments.forEach((seg, idx) => {
+      const row = document.createElement("div");
+      row.className = "concept-row";
+
+      const amountDiv = document.createElement("div");
+      amountDiv.className = "concept-amount";
+      const prefix = idx > 0 ? (seg.operator || "") + " " : "";
+      amountDiv.textContent = prefix + formatNumber(parseFloat(seg.value) || 0);
+
+      const input = document.createElement("input");
+      input.className = "concept-input";
+      input.placeholder = "Concepto (máx. 8)";
+      input.maxLength = 8;
+      input.value = seg.label || "";
+      input.addEventListener("input", (e) => {
+        seg.label = e.target.value.toUpperCase();
+        input.value = seg.label;
+        saveState();
+        updateDisplay();
+      });
+
+      row.appendChild(amountDiv);
+      row.appendChild(input);
+      conceptsPanel.appendChild(row);
+    });
+
+    const totalRow = document.createElement("div");
+    totalRow.className = "concept-row concept-total-row";
+
+    const totalLabel = document.createElement("div");
+    totalLabel.className = "concept-amount concept-total-label";
+    totalLabel.textContent = "TOTAL";
+
+    const totalInput = document.createElement("input");
+    totalInput.className = "concept-input concept-input-total";
+    totalInput.readOnly = true;
+    totalInput.value = formatNumber(parseFloat(currentValue) || evaluateSegments());
+
+    totalRow.appendChild(totalLabel);
+    totalRow.appendChild(totalInput);
+    conceptsPanel.appendChild(totalRow);
+  }
+
+  function renderNotesList() {
+    notesListEl.innerHTML = "";
+    if (!savedNotes.length) return;
+
+    const title = document.createElement("div");
+    title.className = "notes-list-title";
+    title.textContent = "Notas guardadas";
+    notesListEl.appendChild(title);
+
+    const notesToShow = [...savedNotes].sort((a, b) => b.createdAt - a.createdAt);
+
+    notesToShow.forEach((note) => {
+      const card = document.createElement("div");
+      card.className = "note-card";
+
+      const header = document.createElement("div");
+      header.className = "note-card-header";
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "note-name";
+      nameEl.textContent = note.name || "Sin nombre";
+
+      const totalEl = document.createElement("div");
+      totalEl.className = "note-total";
+      totalEl.textContent = formatNumber(note.total);
+
+      header.appendChild(nameEl);
+      header.appendChild(totalEl);
+
+      const meta = document.createElement("div");
+      meta.className = "note-meta";
+      const date = new Date(note.createdAt);
+      const dateStr = date.toLocaleString("es-MX", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      meta.textContent = (note.phone ? `WA: ${note.phone} · ` : "") + dateStr;
+
+      const expr = document.createElement("div");
+      expr.className = "note-expression";
+      expr.textContent = note.expression || "";
+
+      const actions = document.createElement("div");
+      actions.className = "note-actions";
+
+      const loadBtn = document.createElement("button");
+      loadBtn.className = "note-action-btn note-action-load";
+      loadBtn.textContent = "Cargar";
+      loadBtn.addEventListener("click", () => {
+        segments = JSON.parse(JSON.stringify(note.segments || []));
+        currentValue = String(note.total || 0);
+        accumulator = null;
+        pendingOperator = null;
+        waitingForSecondOperand = false;
+        justEvaluated = true;
+        showConcepts = true;
+        toggleConceptsBtn.textContent = "Ocultar conceptos";
+        // cambiar a pestaña de calculadora
+        setActiveTab("calc");
+        syncUI();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "note-action-btn note-action-delete";
+      deleteBtn.textContent = "Eliminar";
+      deleteBtn.addEventListener("click", () => {
+        savedNotes = savedNotes.filter((n) => n.id !== note.id);
+        syncUI();
+      });
+
+      actions.appendChild(loadBtn);
+      actions.appendChild(deleteBtn);
+
+      card.appendChild(header);
+      card.appendChild(meta);
+      if (note.expression) card.appendChild(expr);
+      card.appendChild(actions);
+
+      notesListEl.appendChild(card);
+    });
+  }
+
+  function syncUI() {
+    updateDisplay();
+    renderConceptsPanel();
+    renderNotesList();
+    saveState();
+  }
+
+  function handleDigit(d) {
+    if (justEvaluated) {
+      segments = [];
+      accumulator = null;
+      pendingOperator = null;
+      waitingForSecondOperand = false;
+      justEvaluated = false;
+    }
+
+    if (d === ".") {
+      if (waitingForSecondOperand) {
+        currentValue = "0.";
+        waitingForSecondOperand = false;
+      } else if (!currentValue.includes(".")) {
+        currentValue += ".";
+      }
+    } else {
+      if (waitingForSecondOperand) {
+        currentValue = d;
+        waitingForSecondOperand = false;
+      } else {
+        if (currentValue === "0") currentValue = d;
+        else currentValue += d;
+      }
+    }
+
+    justEvaluated = false;
+    syncUI();
+  }
+
+  function handleOperator(opSymbol) {
+    const inputValue = parseFloat(currentValue) || 0;
+
+    if (justEvaluated) {
+      segments = [{ value: inputValue, operator: "", label: "" }];
+      accumulator = inputValue;
+      pendingOperator = opSymbol;
+      waitingForSecondOperand = true;
+      justEvaluated = false;
+      syncUI();
+      return;
+    }
+
+    if (accumulator === null) {
+      accumulator = inputValue;
+      if (segments.length === 0) {
+        segments = [{ value: inputValue, operator: "", label: "" }];
+      }
+    } else if (!waitingForSecondOperand && pendingOperator) {
+      const result = performCalculation(pendingOperator, accumulator, inputValue);
+      segments.push({ value: inputValue, operator: pendingOperator, label: "" });
+      accumulator = result;
+      currentValue = String(result);
+    }
+
+    pendingOperator = opSymbol;
+    waitingForSecondOperand = true;
+    justEvaluated = false;
+    syncUI();
+  }
+
+  function handleEquals() {
+    const inputValue = parseFloat(currentValue) || 0;
+
+    if (!pendingOperator) {
+      justEvaluated = true;
+      syncUI();
+      return;
+    }
+
+    if (!waitingForSecondOperand) {
+      if (accumulator === null) {
+        accumulator = inputValue;
+        if (segments.length === 0) {
+          segments = [{ value: inputValue, operator: "", label: "" }];
+        }
+      } else {
+        segments.push({ value: inputValue, operator: pendingOperator, label: "" });
+      }
+
+      const result = performCalculation(pendingOperator, accumulator, inputValue);
+      currentValue = String(result);
+      accumulator = null;
+      pendingOperator = null;
+      waitingForSecondOperand = false;
+    }
+
+    justEvaluated = true;
+    syncUI();
+  }
+
+  function handleClear() {
+    currentValue = "0";
+    accumulator = null;
+    pendingOperator = null;
+    waitingForSecondOperand = false;
+    justEvaluated = false;
+    segments = [];
+    syncUI();
+  }
+
+  function handleSign() {
+    if (currentValue === "0") return;
+    if (currentValue.startsWith("-")) {
+      currentValue = currentValue.slice(1);
+    } else {
+      currentValue = "-" + currentValue;
+    }
+    justEvaluated = false;
+    syncUI();
+  }
+
+  function handlePercent() {
+    const val = parseFloat(currentValue) || 0;
+    currentValue = String(val / 100);
+    justEvaluated = false;
+    syncUI();
+  }
+
+  function setActiveTab(tab) {
+    if (tab === "calc") {
+      tabCalc.classList.add("active");
+      tabNotes.classList.remove("active");
+      calcView.style.display = "block";
+      notesView.style.display = "none";
+    } else {
+      tabCalc.classList.remove("active");
+      tabNotes.classList.add("active");
+      calcView.style.display = "block"; // seguimos viendo la calculadora arriba?
+      // mejor: solo notas
+      calcView.style.display = "none";
+      notesView.style.display = "block";
+    }
+  }
+
+  function init() {
+    loadState();
+
+    if (segments.length > 0) {
+      const res = evaluateSegments();
+      currentValue = String(res);
+      justEvaluated = true;
+    } else {
+      currentValue = "0";
+    }
+
+    toggleConceptsBtn.textContent = showConcepts ? "Ocultar conceptos" : "Añadir conceptos";
+
+    document.querySelectorAll(".key").forEach((btn) => {
+      const digit = btn.dataset.digit;
+      const action = btn.dataset.action;
+      const op = btn.dataset.operator;
+
+      btn.addEventListener("click", () => {
+        if (digit !== undefined) {
+          handleDigit(digit);
+        } else if (action === "clear") {
+          handleClear();
+        } else if (action === "sign") {
+          handleSign();
+        } else if (action === "percent") {
+          handlePercent();
+        } else if (action === "operator") {
+          handleOperator(op);
+        } else if (action === "equals") {
+          handleEquals();
+        }
+      });
+    });
+
+    toggleConceptsBtn.addEventListener("click", () => {
+      showConcepts = !showConcepts;
+      toggleConceptsBtn.textContent = showConcepts ? "Ocultar conceptos" : "Añadir conceptos";
+      syncUI();
+    });
+
+    saveNoteBtn.addEventListener("click", () => {
+      if (!segments.length && (!currentValue || currentValue === "0")) {
+        alert("No hay datos para guardar como nota.");
+        return;
+      }
+      noteForm.style.display = "block";
+      noteNameInput.value = "";
+      notePhoneInput.value = "";
+    });
+
+    noteCancelBtn.addEventListener("click", () => {
+      noteForm.style.display = "none";
+    });
+
+    noteSaveBtn.addEventListener("click", () => {
+      if (!segments.length) {
+        segments = [{ value: currentValue, operator: "", label: "" }];
+      }
+      const total = parseFloat(currentValue) || evaluateSegments();
+      const name = noteNameInput.value.trim();
+      const phone = notePhoneInput.value.trim();
+      const expression = buildExpressionText();
+
+      const note = {
+        id: Date.now().toString(),
+        name,
+        phone,
+        total,
+        expression,
+        createdAt: Date.now(),
+        segments: JSON.parse(JSON.stringify(segments)),
+      };
+      savedNotes.push(note);
+      noteForm.style.display = "none";
+      syncUI();
+      setActiveTab("notes");
+    });
+
+    tabCalc.addEventListener("click", () => setActiveTab("calc"));
+    tabNotes.addEventListener("click", () => setActiveTab("notes"));
+
+    setActiveTab("calc");
+    syncUI();
+  }
+
+  init();
+
+// Manejo del evento para instalar como app (PWA)
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (installLink) {
+    installLink.style.display = "inline";
+  }
+});
+
+if (installLink) {
+  installLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!deferredInstallPrompt) {
+      alert("Para añadir esta app, usa la opción 'Añadir a la pantalla de inicio' de tu navegador.");
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+  });
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("service-worker.js")
+      .catch((err) => console.error("SW registration failed", err));
+  });
+}
+</script>
+</body>
+</html>
