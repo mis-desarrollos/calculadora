@@ -384,6 +384,9 @@
 .footer-logo {
   height: 14px;
 }
+#installLink {
+  display: none;
+}
   </style>
 </head>
 <body>
@@ -884,6 +887,85 @@
     syncUI();
   }
 
+  function handleGlobalKeyDown(e) {
+    const active = document.activeElement;
+    const activeTag = active && active.tagName;
+
+    // No interceptar si está escribiendo en un input / textarea o algo editable
+    if (activeTag === "INPUT" || activeTag === "TEXTAREA" || (active && active.isContentEditable)) {
+      return;
+    }
+
+    const key = e.key;
+
+    // Números (incluye teclado numérico)
+    if (key >= "0" && key <= "9") {
+      handleDigit(key);
+      return;
+    }
+
+    // Punto decimal (también coma la tratamos como punto)
+    if (key === "." || key === ",") {
+      handleDigit(".");
+      e.preventDefault();
+      return;
+    }
+
+    // Operadores
+    if (key === "+") {
+      handleOperator("+");
+      e.preventDefault();
+      return;
+    }
+    if (key === "-") {
+      handleOperator("−"); // usamos el mismo símbolo que en los botones
+      e.preventDefault();
+      return;
+    }
+    if (key === "*" || key === "x" || key === "X") {
+      handleOperator("×");
+      e.preventDefault();
+      return;
+    }
+    if (key === "/") {
+      handleOperator("÷");
+      e.preventDefault();
+      return;
+    }
+
+    // Igual / Enter
+    if (key === "Enter" || key === "=") {
+      handleEquals();
+      e.preventDefault();
+      return;
+    }
+
+    // Escape para limpiar todo
+    if (key === "Escape") {
+      handleClear();
+      e.preventDefault();
+      return;
+    }
+
+    // Backspace para borrar último dígito (opcional pero útil)
+    if (key === "Backspace") {
+      if (justEvaluated) {
+        handleClear();
+        e.preventDefault();
+        return;
+      }
+      if (!waitingForSecondOperand) {
+        if (currentValue.length > 1) {
+          currentValue = currentValue.slice(0, -1);
+        } else {
+          currentValue = "0";
+        }
+        e.preventDefault();
+        syncUI();
+      }
+    }
+  }
+
   function setActiveTab(tab) {
     if (tab === "calc") {
       tabCalc.classList.add("active");
@@ -981,7 +1063,8 @@
 
     tabCalc.addEventListener("click", () => setActiveTab("calc"));
     tabNotes.addEventListener("click", () => setActiveTab("notes"));
-
+    // Soporte de teclado
+    window.addEventListener("keydown", handleGlobalKeyDown);
     setActiveTab("calc");
     syncUI();
   }

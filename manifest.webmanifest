@@ -1,6 +1,6 @@
 {
     "name": "Calculadora con conceptos",
-    "short_name": "CalcConceptos",
+    "short_name": "Calculadora MD",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#f3f4f6",
